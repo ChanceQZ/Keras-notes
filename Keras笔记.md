@@ -1,10 +1,155 @@
-# Keras学习笔记
+# Keras深度学习笔记
 
-# 一、基本概念
+# 一 基本概念
 
-## 1 层的概念
+## 1 机器学习基础
 
-&emsp;&emsp;**简单的向量数据**保存在形状为`(samples, features)` 的**2D** **张量**中，通常用**密集连接层**［densely connected layer，也叫全连接层（fully connected layer）或密集层（dense layer），对应于`Keras` 的`Dense` 类］来处理。**序列数据**保存在形状为`(samples, timesteps, features) `的**3D** **张量**中，通常用循环层（recurrent layer，比如`Keras` 的`LSTM `层）来处理。**图像数据**保存在**4D 张量**中，通常用二维卷积层（`Keras` 的`Conv2D`）来处理。
+### 1.1 机器学习分类
+
+&emsp;&emsp;机器学习根据训练数据和学习目标的关系可分为四类：
+
+* **监督学习：**监督学习是目前最常见的机器学习类型，给定一组标注过的样本，模型将通过输入数据映射到已知目标。常用的是分类和回归（这两个都是预测，前者对离散数据预测，后者对连续数据预测）。
+* **无监督学习：**无监督学习是指在没有目标的情况下寻找输入数据的有趣变换，其目的在于数据可视化、
+  数据压缩、数据去噪或更好地理解数据中的相关性。常用的是降维和聚类。
+* **自监督学习：**自监督学习是没有人工标注的标签的监督学习，可将它看作没有人类参与的监督学习，它是监督学习和无监督学习的过渡阶段。
+* **强化学习：**使用奖惩机制，模型接收有关其环境的信息，并学会选择使某种奖励最大化。
+
+### 1.2 训练集、验证集和测试集
+
+&emsp;&emsp;开发模型时总是需要调节模型配置，即调节超参数，所以需要额外使用一部分数据（验证集）来支持该工作的进行。如果直接将数据划为训练集和测试集两部分，前者用于训练模型，后者用于评价模型并调整参数，这样将会导致模型过拟合。造成这一现象的关键在于<u>信息泄露</u>（*information leak*），每次基于模型在验证集上的性能来调节模型超参数，都会有一些关于验证数据的信息泄露到模型中。<u>训练集、验证集和测试集的配比通常6:2:2，如数据量很大（过百万）可以调整为98:1:1</u>。数据量小时，可使用<u>简单的留出验证</u>、<u>K 折验证</u>以及<u>带有打乱数据的重复K 折验证</u>。
+
+1. **简单的留出验证（*hold-out validation*）**
+
+&emsp;&emsp;留出一定比例的数据作为测试集。在剩余的数据上训练模型，然后在测试集上评估模型。这是最简单的评估方法，但有一个缺点：如果可用的数据很少，那么可能验证集和测试集包含的样本就太少，从而无法在统计学上代表数据。
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/hold-out.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">简单的留出验证数据划分</div> </center>
+> <font color=LIGHTCORAL>**注：**上图是在测试集划分后，对训练集和测试集进行划分</font>
+
+> **代码模板：**
+>
+> ```python
+> num_validation_samples = 10000
+> # 打乱数据
+> np.random.shuffle(data)
+> validation_data = data[:num_validation_samples]
+> data = data[num_validation_samples:]
+> training_data = data[:]
+> model = get_model()
+> model.train(training_data)
+> validation_score = model.evaluate(validation_data)
+> # 现在你可以调节模型、重新训练、评估，然后再次调节
+> model = get_model()
+> model.train(np.concatenate([training_data,validation_data]))
+> test_score = model.evaluate(test_data)
+> ```
+
+2. **K折验证（*K-fold validation*）**
+
+&emsp;&emsp;将数据划分为大小相同的K 个分区。对于每个分区i，在剩余的K-1 个分区上训练模型，然后在分区i 上评估模型。最终分数等于K 个分数的平均值。对于不同的训练集- 测试集划分，如果模型性能的变化很大，那么这种方法很有用。
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/k-folds.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">3 折验证</div> </center>
+> **代码模板：**
+>
+> ```python
+> k = 4
+> num_validation_samples = len(data) // k
+> 
+> np.random.shuffle(data)
+> 
+> validation_scores = []
+> for fold in range(k):
+>     validation_data = data[num_validation_samples * fold:
+>                            num_validation_samples * (fold + 1)]
+>     training_data = np.concatenate([data[:num_validation_samples * fold],
+>                                     data[num_validation_samples * (fold + 1):]], 
+>                                     axis=0)
+>     model = get_model()
+>     model.train(training_data)
+>     validation_score = model.evaluate(validation_data)
+>     validation_scores.append(validation_score)
+>     
+> validation_score = np.average(validation_scores)
+> 
+> model = get_model()
+> model.train(data)
+> test_score = model.evaluate(test_data)
+> ```
+3. **带有打乱数据的重复K 折验证（*iterated K-fold validation with shuffling*）**
+
+&emsp;&emsp;具体做法是多次使用K 折验证，在每次将数据划分为K 个分区之前都先将数据打乱。最终分数是每次K 折验证分数的平均值。注意，这种方法一共要训练和评估P×K 个模型（P是重复次数），计算代价很大。（**Kaggle常用**）
+
+> <font color=LIGHTCORAL>**注：**</font>
+>
+> <font color=LIGHTCORAL>1. 在将数据划分为训练集和测试集
+> 之前，通常应该随机打乱数据。</font>
+>
+> <font color=LIGHTCORAL>2.如果是时序数据，那么在划分数据前不应该随机打乱数据，因为这么做会造成时间泄露（temporal
+> leak）。</font>
+>
+> <font color=LIGHTCORAL>3.一
+> 定要确保训练集和验证集之间没有交集。</font>
+
+### 1.3 数据预处理
+
+* **向量化：**神经网络的所有输入和目标都必须是浮点数张量（在特定情况下可以是整数张量）。
+
+* **值标准化：**一般来说，将取值相对较大的数据（比如多位整数，比网络权重的初始值大很多）或异质数据（*heterogeneous data*，比如数据的一个特征在0~1 范围内，另一个特征在100~200 范围内）输入到神经网络中是不安全的。这么做可能导致较大的梯度更新，进而导致网络无法收敛。
+
+  输入数据应有以下特征。
+
+  * **取值较小：**大部分值都应该在 0~1 范围内。
+  * **同质性（*homogenous*）：**所有特征的取值都应该在大致相同的范围内。
+
+* **处理缺失值：**对于神经网络，将缺失值设置为0 是安全的，只要0 不是一个有意义的值。（注：不能训练集无缺失值，而测试集有缺失值，在这种情况下，网络不可能学会忽略缺失值。）
+
+### 1.4 特征工程
+
+&emsp;&emsp;特征工程的本质：用更简单的方式表述问题，从而使问题变得更容易。它通常需要深入理解问题。
+
+&emsp;&emsp;但对于现代深度学习，大部分特征工程都是不需要的，因为神经网络能够从原始数据中自动提取有用的特征。但也需要注重特征工程，因为：
+
+* 良好的特征仍然可以让你用更少的资源更优雅地解决问题。
+* 良好的特征可以让你用更少的数据解决问题。
+
+### 1.5 过拟合和欠拟合
+
+&emsp;&emsp;训练数据上的损失越小，测试数据上的损失也越小。这时的模型是欠拟合（*underfit*）的，即仍有改进的空间，网络还没有对训练数据中所有相关模式建模，解决方案是继续学习或增加模型复杂度。但在训练数据上迭代一定次数之后，泛化不再提高，验证指标先是不变，然后开始变差，即模型开始过拟合，最优解决方法是获取更多的训练数据或者使用正则化。
+
+&emsp;&emsp;过拟合的解决方法：
+
+* 获得更多数据
+
+* 减少网络容量
+
+* 权重正则化
+
+  ```python
+  from keras import regularizers
+  regularizers.l1(0.001) # L1正则化
+  regularizers.l1_l2(l1=0.001, l2=0.001) # L2正则化
+  
+  model.add(layers.Dense(16, kernel_regularizer=regularizers.l2(0.001),
+  activation='relu'))
+  ```
+
+* dropout正则化
+
+  `model.add(layers.Dropout(0.5))`
+
+### 1.6 机器学习一般流程
+
+* 定义问题与要训练的数据。收集这些数据，有需要的话用标签来标注数据。
+* 选择衡量问题成功的指标。你要在验证数据上监控哪些指标？
+*  确定评估方法：留出验证？ K折验证？你应该将哪一部分数据用于验证？
+* 开发第一个比基准更好的模型，即一个具有统计功效的模型。
+* 开发过拟合的模型。
+* 基于模型在验证数据上的性能来进行模型正则化与调节超参数。
+
+## 2 Keras基础
+
+### 2.1 层的概念
+
+&emsp;&emsp;**简单的向量数据**保存在形状为`(samples`, `features)` 的**2D** **张量**中，通常用**密集连接层**［densely connected layer，也叫全连接层（fully connected layer）或密集层（dense layer），对应于`Keras` 的`Dense` 类］来处理。**序列数据**保存在形状为`(samples`, `timesteps`, `features) `的**3D** **张量**中，通常用循环层（recurrent layer，比如`Keras` 的`LSTM `层）来处理。**图像数据**保存在**4D 张量**中，通常用二维卷积层（`Keras` 的`Conv2D`）来处理。
 
 ```python
 from keras import models
@@ -15,11 +160,19 @@ model.add(layers.Dense(32, input_shape=(784,)))
 model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 ```
 
-## 2 损失值与优化器
+### 2.2 损失值与优化器
 
 &emsp;&emsp;对于**二分类问题**，可以使用**二元交叉熵**（`binary_crossentropy`）损失函数；对于**多分类问题**，可以用**分类交叉熵**（`categorical_crossentropy`）损失函数；对于**回归问题**，可以用**均方误差（mean-squared error）**损失函数；对于**序列**学习问题，可以用**联结主义时序分类（CTC**，connectionist temporal classification）损失函数，等等。
 
-## 3 Keras开发流程
+|      问题类型       | 最后一层激活 |         损失函数          |
+| :-----------------: | :----------: | :-----------------------: |
+|     二分类问题      |   sigmoid    |    binary_crossentropy    |
+| 多分类、单标签问题  |   softmax    | categorical_crossentropy  |
+| 多分类、多标签问题  |   sigmoid    |    binary_crossentropy    |
+|    回归到任意值     |      无      |            mse            |
+| 回归到0~1范围内的值 |   sigmoid    | mse 或binary_crossentropy |
+
+### 2.3 Keras开发流程
 
 1.  定义训练数据：输入张量和目标张量。
 2. 定义层组成的网络（或模型），将输入映射到目标。
@@ -64,7 +217,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > model.predict(x_test) # 模型精度合理，可用于实践
 > ```
 
-# 二、常见问题基本模板
+# 二 常见问题基本模板
 
 ## 1 二分类问题
 
@@ -291,6 +444,9 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 
 
 > Author：钱小z
+>
 > Email：qz_gis@163.com
+>
 > Bio：GISer，Spatiotemporal data mining
+>
 > GItHub：QianXzhen

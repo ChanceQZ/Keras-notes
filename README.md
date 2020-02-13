@@ -1,2 +1,3 @@
 # Keras-
-Keras笔记（《python深度学习》及相关文档）
+Keras笔记（参考《python深度学习》及相关文档）
+
