@@ -119,9 +119,17 @@
 
 * 获得更多数据
 
+  * 手工获得
+  * 数据增强
+
 * 减少网络容量
 
+  * 网络深度
+  * 隐藏神经元数量
+
 * 权重正则化
+
+  * L1 || L2正则化
 
   ```python
   from keras import regularizers
@@ -440,7 +448,116 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > >
 > > <font color=LIGHTCORAL>&emsp;2.如果可用的数据很少，可使用K折验证评估模型，此时也应使用小的网络，即隐藏层较少，否则将造成过拟合。</font>
 
+# 三 计算机视觉&卷积神经网络
 
+## 1 基本概念
+
+* **图像组成：**包含两个空间轴（**高度和宽度**）和一个深度轴（也叫作**通道**，*Channel*）的3D张量。对于黑白图（如MNIST数字图像），深度等于1，RGB图深度等于3，。
+
+* **卷积运算（*Convolution*）：**通过卷积学到图像的局部模式，具有平移不变性（可以高效地学到局部模式）以及模式的空间层次结构（卷积从前往后能学到局部到宏观的特征）。
+
+  对应于*Keras*的`Conv2D`层：`Conv2D(output_depth, (window_height, window_width))`
+
+  * **尺寸：**过滤器（*Filter*）的尺寸为$$n*n*c_{l-1}$$，其中$$n$$一般为奇数，常用3、5、7等，$$c_{l-1}$$为上一层的通道数量。卷积窗口的数量作为下一层特征图的通道数。
+  * ***Padding*：** 将特征图进行填充，根据padding_size，分为*Valid*卷积和*Same*卷积，前者意味着不填充，后者意味着填充以及卷积后输出的特征图尺寸和原来一样。
+  * **步长（*Stride*）：**过滤器每次滑动的步幅。
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/Conv_diagram.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">卷积示意图</div> </center>
+
+&emsp;&emsp;卷积核运算后输出的特征图尺寸为：
+$$
+times (\frac{n+2p-f}{s} + 1) \times (\frac{n+2p-f}{s} + 1) \times m_{l-1}
+$$
+其中，$n$为图像的宽和高，$p$为padding size，$f$为过滤器的宽和高，$s$为步长，$m_{l-1}$前一层的过滤器的数量。
+
+* **池化（*Pooling*）：**一般用**最大池化（`MaxPooling2D`）**，最大池化与卷积的最大不同之处在于，最大池化通常使用2×2 的窗口和步幅2，其目的是**将特征图下采样2 倍，即缩减一半**。用池化的原因主要有两点：1、让后面的卷积层包含更复杂的信息（学到宏观知识）；2、减少参数，防止过拟合。
+* **全连接（*Dense*）：**同普通的神经网络，一般将该层放到卷积的最末，以学习宏观知识。
+
+> **基本模板**
+>
+> ```python
+> from keras import layers
+> from keras import models
+> 
+> model = models.Sequential()
+> # 卷积1
+> model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)))
+> model.add(layers.MaxPooling2D((2, 2)))
+> # 卷积2
+> model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+> model.add(layers.MaxPooling2D((2, 2)))
+> # 卷积3
+> model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+> #model.summary() #查看模型的架构
+> 
+> # 拉直
+> model.add(layers.Flatten())
+> # 全连接
+> model.add(layers.Dense(64, activation='relu'))
+> model.add(layers.Dense(10, activation='softmax'))
+> 
+> # 编译、训练、评价等操作同基本的神经网络
+> ```
+
+> <font color=LIGHTCORAL>**注：**</font>
+>
+> <font color=LIGHTCORAL>网络中特征图的深度在逐渐增大（如从32 增大到128），而特征图的尺寸在逐渐减小（如从150×150 减小到7×7），这几乎是所有卷积神经网络的模式。</font>
+
+## 2 CNN技巧
+
+#### 2.1 数据增强
+
+&emsp;&emsp;*Keras*中有一个图像处理辅助工具的模块，位于`keras.preprocessing.image`，它包含了一个`ImageDataGenerator`类，可以快速创建*Python*生成器，能够将硬盘上的图像文件自动转换为预处理好的张量批量，可完成一下处理：
+
+* 读取图像；
+* 将JPEG文件解码为RGB像素网格；
+* 将这些像素网格转换成浮点张量；
+* 将像素值缩放到[0, 1 ]区间。
+
+&emsp;&emsp;数据增强是从现有的训练样本中生成更多的训练数据，其方法是利用多种能够生成可信图像的随机变换来**增加（*augment*）样本**。
+
+> **使用`ImageDataGenerator`进行预处理以及数据增强**
+>
+> ```python
+> from keras.preprocessing.image import ImageDataGenerator
+> 
+> 
+> train_datagen = ImageDataGenerator(
+>                     rescale=1./255,
+>                     rotation_range=40,	# （数据增强开始）， 旋转角度范围
+>                     width_shift_range=0.2, # 水平平移比例
+>                     height_shift_range=0.2, # 垂直平移比例
+>                     shear_range=0.2, # 随机错切角度
+>                     zoom_range=0.2, # 随机缩放范围
+>                     horizontal_flip=True,) # 随机将一半图像水平翻转
+> test_datagen = ImageDataGenerator(rescale=1./255) # 不能增强验证数据
+> 
+> train_generator = train_datagen.flow_from_directory(
+>                     train_dir, # 目标目录
+>                     target_size=(150, 150), # 将所有图像大小调整为150*150
+>                     batch_size=32,
+>                     class_mode='binary') # 若inary_crossentropy损失，则二进制标签
+> validation_generator = test_datagen.flow_from_directory(
+>                         validation_dir,
+>                         target_size=(150, 150),
+>                         batch_size=32,
+>                         class_mode='binary')
+> #############
+> #model已经建好
+> ############
+> 
+> history = model.fit_generator(
+>             train_generator,
+>             steps_per_epoch=100,
+>             epochs=30,
+>             validation_data=validation_generator,
+>             validation_steps=50)
+> model.save('my_model.h5')
+> ```
+
+#### 2.2 迁移学习（预训练）
+
+#### 2.3 对预训练网络微调
 
 
 > Author：钱小z
