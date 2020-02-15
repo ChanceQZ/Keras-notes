@@ -2,9 +2,9 @@
 
 # 一 基本概念
 
-## 1 机器学习基础
+## 1.1 机器学习基础
 
-### 1.1 机器学习分类
+### 1.1.1 机器学习分类
 
 &emsp;&emsp;机器学习根据训练数据和学习目标的关系可分为四类：
 
@@ -14,7 +14,7 @@
 * **自监督学习：**自监督学习是没有人工标注的标签的监督学习，可将它看作没有人类参与的监督学习，它是监督学习和无监督学习的过渡阶段。
 * **强化学习：**使用奖惩机制，模型接收有关其环境的信息，并学会选择使某种奖励最大化。
 
-### 1.2 训练集、验证集和测试集
+### 1.1.2 训练集、验证集和测试集
 
 &emsp;&emsp;开发模型时总是需要调节模型配置，即调节超参数，所以需要额外使用一部分数据（验证集）来支持该工作的进行。如果直接将数据划为训练集和测试集两部分，前者用于训练模型，后者用于评价模型并调整参数，这样将会导致模型过拟合。造成这一现象的关键在于<u>信息泄露</u>（*information leak*），每次基于模型在验证集上的性能来调节模型超参数，都会有一些关于验证数据的信息泄露到模型中。<u>训练集、验证集和测试集的配比通常6:2:2，如数据量很大（过百万）可以调整为98:1:1</u>。数据量小时，可使用<u>简单的留出验证</u>、<u>K 折验证</u>以及<u>带有打乱数据的重复K 折验证</u>。
 
@@ -22,7 +22,7 @@
 
 &emsp;&emsp;留出一定比例的数据作为测试集。在剩余的数据上训练模型，然后在测试集上评估模型。这是最简单的评估方法，但有一个缺点：如果可用的数据很少，那么可能验证集和测试集包含的样本就太少，从而无法在统计学上代表数据。
 
-<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/hold-out.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">简单的留出验证数据划分</div> </center>
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/hold-out.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>简单的留出验证数据划分</b></div> </center>
 > <font color=LIGHTCORAL>**注：**上图是在测试集划分后，对训练集和测试集进行划分</font>
 
 > **代码模板：**
@@ -47,7 +47,7 @@
 
 &emsp;&emsp;将数据划分为大小相同的K 个分区。对于每个分区i，在剩余的K-1 个分区上训练模型，然后在分区i 上评估模型。最终分数等于K 个分数的平均值。对于不同的训练集- 测试集划分，如果模型性能的变化很大，那么这种方法很有用。
 
-<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/k-folds.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">3 折验证</div> </center>
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch1/k-folds.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>3 折验证</b></div> </center>
 > **代码模板：**
 >
 > ```python
@@ -89,7 +89,7 @@
 > <font color=LIGHTCORAL>3.一
 > 定要确保训练集和验证集之间没有交集。</font>
 
-### 1.3 数据预处理
+### 1.1.3 数据预处理
 
 * **向量化：**神经网络的所有输入和目标都必须是浮点数张量（在特定情况下可以是整数张量）。
 
@@ -102,7 +102,7 @@
 
 * **处理缺失值：**对于神经网络，将缺失值设置为0 是安全的，只要0 不是一个有意义的值。（注：不能训练集无缺失值，而测试集有缺失值，在这种情况下，网络不可能学会忽略缺失值。）
 
-### 1.4 特征工程
+### 1.1.4 特征工程
 
 &emsp;&emsp;特征工程的本质：用更简单的方式表述问题，从而使问题变得更容易。它通常需要深入理解问题。
 
@@ -111,7 +111,7 @@
 * 良好的特征仍然可以让你用更少的资源更优雅地解决问题。
 * 良好的特征可以让你用更少的数据解决问题。
 
-### 1.5 过拟合和欠拟合
+### 1.1.5 过拟合和欠拟合
 
 &emsp;&emsp;训练数据上的损失越小，测试数据上的损失也越小。这时的模型是欠拟合（*underfit*）的，即仍有改进的空间，网络还没有对训练数据中所有相关模式建模，解决方案是继续学习或增加模型复杂度。但在训练数据上迭代一定次数之后，泛化不再提高，验证指标先是不变，然后开始变差，即模型开始过拟合，最优解决方法是获取更多的训练数据或者使用正则化。
 
@@ -144,7 +144,7 @@
 
   `model.add(layers.Dropout(0.5))`
 
-### 1.6 机器学习一般流程
+### 1.1.6 机器学习一般流程
 
 * 定义问题与要训练的数据。收集这些数据，有需要的话用标签来标注数据。
 * 选择衡量问题成功的指标。你要在验证数据上监控哪些指标？
@@ -153,9 +153,9 @@
 * 开发过拟合的模型。
 * 基于模型在验证数据上的性能来进行模型正则化与调节超参数。
 
-## 2 Keras基础
+## 1.2 Keras基础
 
-### 2.1 层的概念
+### 1.2.1 层的概念
 
 &emsp;&emsp;**简单的向量数据**保存在形状为`(samples`, `features)` 的**2D** **张量**中，通常用**密集连接层**［densely connected layer，也叫全连接层（fully connected layer）或密集层（dense layer），对应于`Keras` 的`Dense` 类］来处理。**序列数据**保存在形状为`(samples`, `timesteps`, `features) `的**3D** **张量**中，通常用循环层（recurrent layer，比如`Keras` 的`LSTM `层）来处理。**图像数据**保存在**4D 张量**中，通常用二维卷积层（`Keras` 的`Conv2D`）来处理。
 
@@ -168,7 +168,7 @@ model.add(layers.Dense(32, input_shape=(784,)))
 model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 ```
 
-### 2.2 损失值与优化器
+### 1.2.2 损失值与优化器
 
 &emsp;&emsp;对于**二分类问题**，可以使用**二元交叉熵**（`binary_crossentropy`）损失函数；对于**多分类问题**，可以用**分类交叉熵**（`categorical_crossentropy`）损失函数；对于**回归问题**，可以用**均方误差（mean-squared error）**损失函数；对于**序列**学习问题，可以用**联结主义时序分类（CTC**，connectionist temporal classification）损失函数，等等。
 
@@ -180,7 +180,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 |    回归到任意值     |      无      |            mse            |
 | 回归到0~1范围内的值 |   sigmoid    | mse 或binary_crossentropy |
 
-### 2.3 Keras开发流程
+### 1.2.3 Keras开发流程
 
 1.  定义训练数据：输入张量和目标张量。
 2. 定义层组成的网络（或模型），将输入映射到目标。
@@ -227,7 +227,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 
 # 二 常见问题基本模板
 
-## 1 二分类问题
+## 2.1 二分类问题
 
 > **问题描述：**预测电影评论的情绪，即电影评论分类
 >
@@ -279,10 +279,10 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > plt.legend()
 > ```
 >
-> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch2/loss1.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">loss曲线</div> </center>
->* **绘制精度曲线**
-> 
->```python
+> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch2/loss1.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>loss曲线</b></div> </center>
+> * **绘制精度曲线**
+>
+> ```python
 > #使用matplotlib绘制训练精度图
 > acc = history_dict['acc']
 > val_acc = history_dict['val_acc']
@@ -293,14 +293,14 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > plt.ylabel('Accuracy')
 > plt.legend()
 > ```
-> 
-><center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"   width="500px"    src="images/ch2/accuracy1.png">    <br>    <div style="color:orange;   display: inline-block;    color: #999;    padding: 2px;">accuracy曲线</div> </center>
+>
+> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"   width="500px"    src="images/ch2/accuracy1.png">    <br>    <div style="color:orange;   display: inline-block;    color: #999;    padding: 2px;"><b>accuracy曲线</b></div> </center>
 > > **分析：**根据两幅图，可知发生了过拟合，在第3轮时应该停止训练（或者使用其他降低过拟合的方法）
 >
 > * **模型调整**
 >
 > ```python
->model = models.Sequential()
+> model = models.Sequential()
 > model.add(layers.Dense(16, activation='relu', input_shape=(10000,)))
 > model.add(layers.Dense(16, activation='relu'))
 > model.add(layers.Dense(1, activation='sigmoid'))
@@ -311,10 +311,28 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > results = model.evaluate(x_test, y_test)
 > model.predict(x_test) # 模型精度合理，可用于实践
 > ```
-> 
-> > <font color=LIGHTCORAL>**注：**无论你的问题是什么，`rmsprop`优化器通常都是足够好的选择</font>
+>
+> > <font color=LIGHTCORAL>**注：**</font>
+> >
+> > <font color=LIGHTCORAL>1. 无论你的问题是什么，`rmsprop`优化器通常都是足够好的选</font>
+> >
+> > <font color=LIGHTCORAL>2.当曲线不平滑时，可使用如下代码：</font>
+> >
+> > ```python
+> > def smooth_curve(points, factor=0.8):
+> >     smoothed_points = []
+> >     for point in points:
+> >         if smoothed_points:
+> >             previous = smoothed_points[-1]
+> >             smoothed_points.append(previous * factor + point * (1 - factor))
+> >         else:
+> >         	smoothed_points.append(point)
+> >     return smoothed_points
+> > ```
+> >
+> > 
 
-## 2 多分类问题
+## 2.2 多分类问题
 
 > **问题描述：**预测新闻的主题，即对新闻进行多分类
 >
@@ -370,7 +388,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > >   * <font color=LIGHTCORAL> 通过分类编码（也叫 `one-hot` 编码）对标签进行编码，然后使用` categorical_crossentropy `作为损失函数。</font>
 > >   * <font color=LIGHTCORAL>*将标签编码为整数，然后使用 `sparse_categorical_crossentropy`损失函数。</font>
 
-## 3 回归问题
+## 2.3 回归问题
 
 > **问题描述：**预测房价
 >
@@ -413,7 +431,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 > ```
 > * **K折交叉验证（取决于数据量）**
 >
-> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch2/k_folds.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">3折交叉验证</div> </center>
+> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch2/k_folds.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>3折交叉验证</b></div> </center>
 ><font color=gray>曲线和分析什么的同上，故不介绍，直接贴模型</font>
 > 
 >```python
@@ -442,7 +460,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 >     all_scores.append(val_mae)
 > ```
 > 
-> > <font color=LIGHTCORAL>**注：**</font>
+>> <font color=LIGHTCORAL>**注：**</font>
 > >
 > > <font color=LIGHTCORAL>&emsp;1.回归常用的损失函数为均方误差（*MSE*），常用的评估指标为平均绝对误差（*MAE*）。</font>
 > >
@@ -450,7 +468,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
 
 # 三 计算机视觉&卷积神经网络
 
-## 1 基本概念
+## 3.1 基本概念
 
 * **图像组成：**包含两个空间轴（**高度和宽度**）和一个深度轴（也叫作**通道**，*Channel*）的3D张量。对于黑白图（如MNIST数字图像），深度等于1，RGB图深度等于3，。
 
@@ -462,8 +480,7 @@ model.add(layers.Dense(32)) # 输入神经元数量为上一层的输出数量
   * ***Padding*：** 将特征图进行填充，根据padding_size，分为*Valid*卷积和*Same*卷积，前者意味着不填充，后者意味着填充以及卷积后输出的特征图尺寸和原来一样。
   * **步长（*Stride*）：**过滤器每次滑动的步幅。
 
-<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/Conv_diagram.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;">卷积示意图</div> </center>
-
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/Conv_diagram.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>卷积示意图</b></div> </center>
 &emsp;&emsp;卷积核运算后输出的特征图尺寸为：
 $$
 times (\frac{n+2p-f}{s} + 1) \times (\frac{n+2p-f}{s} + 1) \times m_{l-1}
@@ -499,13 +516,11 @@ $$
 > # 编译、训练、评价等操作同基本的神经网络
 > ```
 
-> <font color=LIGHTCORAL>**注：**</font>
->
-> <font color=LIGHTCORAL>网络中特征图的深度在逐渐增大（如从32 增大到128），而特征图的尺寸在逐渐减小（如从150×150 减小到7×7），这几乎是所有卷积神经网络的模式。</font>
+> <font color=LIGHTCORAL>**注：**网络中特征图的深度在逐渐增大（如从32 增大到128），而特征图的尺寸在逐渐减小（如从150×150 减小到7×7），这几乎是所有卷积神经网络的模式。</font>
 
-## 2 CNN技巧
+## 3.2 CNN技巧
 
-#### 2.1 数据增强
+#### 3.2.1 数据增强
 
 &emsp;&emsp;*Keras*中有一个图像处理辅助工具的模块，位于`keras.preprocessing.image`，它包含了一个`ImageDataGenerator`类，可以快速创建*Python*生成器，能够将硬盘上的图像文件自动转换为预处理好的张量批量，可完成一下处理：
 
@@ -521,44 +536,190 @@ $$
 > ```python
 > from keras.preprocessing.image import ImageDataGenerator
 > 
-> 
 > train_datagen = ImageDataGenerator(
->                     rescale=1./255,
->                     rotation_range=40,	# （数据增强开始）， 旋转角度范围
->                     width_shift_range=0.2, # 水平平移比例
->                     height_shift_range=0.2, # 垂直平移比例
->                     shear_range=0.2, # 随机错切角度
->                     zoom_range=0.2, # 随机缩放范围
->                     horizontal_flip=True,) # 随机将一半图像水平翻转
+>               rescale=1./255,
+>                  rotation_range=40,	# （数据增强开始）， 旋转角度范围
+>                  width_shift_range=0.2, # 水平平移比例
+>                  height_shift_range=0.2, # 垂直平移比例
+>                  shear_range=0.2, # 随机错切角度
+>                  zoom_range=0.2, # 随机缩放范围
+>                  horizontal_flip=True, # 随机将一半图像水平翻转
+> 				 fill_mode='nearest') # 处理变换时超出边界的点
 > test_datagen = ImageDataGenerator(rescale=1./255) # 不能增强验证数据
 > 
 > train_generator = train_datagen.flow_from_directory(
->                     train_dir, # 目标目录
->                     target_size=(150, 150), # 将所有图像大小调整为150*150
->                     batch_size=32,
->                     class_mode='binary') # 若inary_crossentropy损失，则二进制标签
+>                  train_dir, # 目标目录
+>                  target_size=(150, 150), # 将所有图像大小调整为150*150
+>                  batch_size=32,
+>                  class_mode='binary') # 若inary_crossentropy损失，则二进制标签
 > validation_generator = test_datagen.flow_from_directory(
->                         validation_dir,
->                         target_size=(150, 150),
->                         batch_size=32,
->                         class_mode='binary')
+>     				 validation_dir,
+>                      target_size=(150, 150),
+>                      batch_size=32,
+>                      class_mode='binary')
 > #############
 > #model已经建好
 > ############
 > 
 > history = model.fit_generator(
->             train_generator,
->             steps_per_epoch=100,
->             epochs=30,
->             validation_data=validation_generator,
->             validation_steps=50)
+>       train_generator,
+>          steps_per_epoch=100,
+>          epochs=30,
+>          validation_data=validation_generator,
+>          validation_steps=50)
 > model.save('my_model.h5')
 > ```
 
-#### 2.2 迁移学习（预训练）
+#### 3.2.2 迁移学习（预训练）
 
-#### 2.3 对预训练网络微调
+&emsp;&emsp;**预训练网络（*pretrained network*）**是一个保存好的网络，之前已经在大型数据集上训练好。使用预训练网络有两种方法：特征提取（feature extraction）和微调模型（fine-tuning）
 
+##### 3.2.2.1 特征提取（*feature extraction*）
+
+&emsp;&emsp;特征提取是使用之前网络学到的表示来从新样本中提取出有趣的特征。然后将这些特征输入一个新的分类器，从头开始训练。CNN由两部分组成：**卷积基（*convolutional base*）**和**密集连接分类器**。特征提取即使用原始模型的卷积基，并根据现有数据重新训练分类器。
+
+> <font color=LIGHTCORAL>**注：**如果新数据集与原始模型训练的数据集有很大差异，那么最好只使用模型的前几层来做特征提取，而不是使用整个卷积基。</font>
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/Transfer.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>特征提取示意图</b></div> </center>
+> 1. **基于*VGG16*以及*ImageNet*数据集的特征提取（无数据增强，直接使用原始卷积基）**
+>
+> ```python
+> from keras.applications import VGG16
+> import numpy as np
+> from keras.preprocessing.image import ImageDataGenerator
+> from keras import models
+> from keras import layers
+> from keras import optimizers
+> 
+> # 预训练网络
+> conv_base = VGG16(weights='imagenet', # 模型初始化的权重检查点
+>                   include_top=False, # 指定模型最后是否包含密集连接分类器，原始有1000个
+>                   input_shape=(150, 150, 3)) # 输入到网络中的图像张量的形状，可选
+> 
+> # 图像预处理生成器
+> datagen = ImageDataGenerator(rescale=1./255)
+> batch_size = 20
+> 
+> # 提取特征（利用预训练的卷积基将数据进行计算处理）
+> def extract_features(directory, sample_count):
+>     features = np.zeros(shape=(sample_count, 4, 4, 512))
+>     labels = np.zeros(shape=(sample_count))
+>     generator = datagen.flow_from_directory(
+>                     directory,
+>                     target_size=(150, 150),
+>                     batch_size=batch_size,
+>                     class_mode='binary')
+>     i = 0
+>     for inputs_batch, labels_batch in generator:
+>         features_batch = conv_base.predict(inputs_batch)
+>         features[i * batch_size : (i + 1) * batch_size] = features_batch
+>         labels[i * batch_size : (i + 1) * batch_size] = labels_batch
+>         i += 1
+>         # 生成器会一直循环，必须在读取完成所有图像后终止循环
+>         if i * batch_size >= sample_count:
+>         	break
+>     return features, labels
+> 
+> # 对训练集、验证集和测试集进行特征提取
+> train_features, train_labels = extract_features(train_dir, 2000)
+> validation_features, validation_labels = extract_features(validation_dir, 1000)
+> test_features, test_labels = extract_features(test_dir, 1000)
+> 
+> # 为了进行密集连接迅速按，将数据展平
+> train_features = np.reshape(train_features, (2000, 4 * 4 * 512))
+> validation_features = np.reshape(validation_features, (1000, 4 * 4 * 512))
+> test_features = np.reshape(test_features, (1000, 4 * 4 * 512))
+> 
+> # 密集连接层
+> model = models.Sequential()
+> model.add(layers.Dense(256, activation='relu', input_dim=4 * 4 * 512))
+> model.add(layers.Dropout(0.5)) # 防止过拟合
+> model.add(layers.Dense(1, activation='sigmoid'))
+> 
+> model.compile(optimizer=optimizers.RMSprop(lr=2e-5),
+>               loss='binary_crossentropy',
+>               metrics=['acc'])
+> 
+> history = model.fit(train_features, train_labels,
+>                     epochs=30,
+>                     batch_size=20,
+>                     validation_data=(validation_features, validation_labels))
+> ```
+>
+> 2. **同1，对原始卷积基进行冻结，可用数据增强**
+>
+> ```python
+> from keras import models
+> from keras import layers
+> from keras.applications import VGG16
+> 
+> # 预训练网络
+> conv_base = VGG16(weights='imagenet', # 模型初始化的权重检查点
+>                   include_top=False, # 指定模型最后是否包含密集连接分类器，原始有1000个
+>                   input_shape=(150, 150, 3)) # 输入到网络中的图像张量的形状，可选
+> 
+> model = models.Sequential()
+> model.add(conv_base) # 原始卷积基代替卷积层
+> model.add(layers.Flatten())
+> model.add(layers.Dense(256, activation='relu'))
+> model.add(layers.Dense(1, activation='sigmoid'))
+> 
+> # 设置trainable进行冻结
+> conv_base.trainable = False
+> 
+> model.compile(loss='binary_crossentropy',
+>               optimizer=optimizers.RMSprop(lr=2e-5),
+>               metrics=['acc'])
+> 
+> # 数据增强见2.1
+> ```
+
+##### 3.2.2.2 微调模型（*fine-tuning*）
+
+&emsp;&emsp;对于用于特征提取的冻结的模型基，**微调是指将其顶部的几层“解冻”**，并将这解冻的几层和新增加的部分（如全连接分类器）联合训练。微调步骤：
+
+1. 在已经训练好的基网络（*base network*）上添加自定义网络。
+
+2. 冻结基网络。
+
+3. 训练所添加的部分。
+
+4. 解冻基网络的一些层。
+
+5. 联合训练解冻的这些层和添加的部分。
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="700px"   src="images/ch3/fine_tuning.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>微调示意图</b></div> </center>
+
+> **微调模型**
+>
+> ```python
+> conv_base.trainable = True
+> 
+> # 一直冻结到某层
+> set_trainable = False
+> for layer in conv_base.layers:
+>     if layer.name == 'block5_conv1':
+>         set_trainable = True
+>     if set_trainable:
+>         layer.trainable = True
+>     else:
+>         layer.trainable = False
+>         
+> model.compile(loss='binary_crossentropy',
+>               optimizer=optimizers.RMSprop(lr=1e-5), # 为了不影响冻结层，学习率较小
+>               metrics=['acc'])
+> 
+> # 其他代码同3.2.2.1 2
+> ```
+>
+> 
+
+
+> <font color=LIGHTCORAL>**注：**</font>
+>
+> <font color=LIGHTCORAL>&emsp;1.卷积基中更靠底部的层编码的是更加通用的可复用特征，而更靠顶部的层编码的是更专业化的特征。微调更靠底部的层，得到的回报会更少。</font>
+>
+> <font color=LIGHTCORAL>&emsp;2.训练的参数越多，过拟合的风险越大。卷积基有 1500 万个参数，所以在小型数据集上训练这么多参数是有风险的。</font>
 
 > Author：钱小z
 >
