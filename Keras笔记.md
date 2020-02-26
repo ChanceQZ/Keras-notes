@@ -537,37 +537,40 @@ $$
 > from keras.preprocessing.image import ImageDataGenerator
 > 
 > train_datagen = ImageDataGenerator(
->               rescale=1./255,
->                  rotation_range=40,	# （数据增强开始）， 旋转角度范围
->                  width_shift_range=0.2, # 水平平移比例
->                  height_shift_range=0.2, # 垂直平移比例
->                  shear_range=0.2, # 随机错切角度
->                  zoom_range=0.2, # 随机缩放范围
->                  horizontal_flip=True, # 随机将一半图像水平翻转
+>            rescale=1./255,
+>               rotation_range=40,	# （数据增强开始）， 旋转角度范围
+>               width_shift_range=0.2, # 水平平移比例
+>               height_shift_range=0.2, # 垂直平移比例
+>               shear_range=0.2, # 随机错切角度
+>               zoom_range=0.2, # 随机缩放范围
+>               horizontal_flip=True, # 随机将一半图像水平翻转
 > 				 fill_mode='nearest') # 处理变换时超出边界的点
 > test_datagen = ImageDataGenerator(rescale=1./255) # 不能增强验证数据
 > 
 > train_generator = train_datagen.flow_from_directory(
->                  train_dir, # 目标目录
->                  target_size=(150, 150), # 将所有图像大小调整为150*150
->                  batch_size=32,
->                  class_mode='binary') # 若inary_crossentropy损失，则二进制标签
+>               train_dir, # 目标目录，内部应该含有子文件夹，代表类别
+>               target_size=(150, 150), # 将所有图像大小调整为150*150
+>               batch_size=32,
+>               class_mode='binary') # 若inary_crossentropy损失，则二进制标签
 > validation_generator = test_datagen.flow_from_directory(
->     				 validation_dir,
->                      target_size=(150, 150),
->                      batch_size=32,
->                      class_mode='binary')
+>  				 validation_dir,
+>                   target_size=(150, 150),
+>                   batch_size=32,
+>                   class_mode='binary')
 > #############
 > #model已经建好
 > ############
 > 
 > history = model.fit_generator(
->       train_generator,
->          steps_per_epoch=100,
->          epochs=30,
->          validation_data=validation_generator,
->          validation_steps=50)
+>    train_generator,
+>       steps_per_epoch=100,
+>       epochs=30,
+>       validation_data=validation_generator,
+>       validation_steps=50)
 > model.save('my_model.h5')
+> 
+> # from keras.models import load_model
+> # model = load_model('my_model.h5')
 > ```
 
 #### 3.2.2 迁移学习（预训练）
@@ -636,6 +639,10 @@ $$
 > model.add(layers.Dropout(0.5)) # 防止过拟合
 > model.add(layers.Dense(1, activation='sigmoid'))
 > 
+> train_features = np.reshape(train_features, (2000, 4 * 4 * 512))
+> validation_features = np.reshape(validation_features, (1000, 4 * 4 * 512))
+> test_features = np.reshape(test_features, (1000, 4 * 4 * 512))
+> 
 > model.compile(optimizer=optimizers.RMSprop(lr=2e-5),
 >               loss='binary_crossentropy',
 >               metrics=['acc'])
@@ -689,7 +696,6 @@ $$
 5. 联合训练解冻的这些层和添加的部分。
 
 <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="700px"   src="images/ch3/fine_tuning.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>微调示意图</b></div> </center>
-
 > **微调模型**
 >
 > ```python
@@ -712,7 +718,6 @@ $$
 > # 其他代码同3.2.2.1 2
 > ```
 >
-> 
 
 
 > <font color=LIGHTCORAL>**注：**</font>
@@ -720,6 +725,431 @@ $$
 > <font color=LIGHTCORAL>&emsp;1.卷积基中更靠底部的层编码的是更加通用的可复用特征，而更靠顶部的层编码的是更专业化的特征。微调更靠底部的层，得到的回报会更少。</font>
 >
 > <font color=LIGHTCORAL>&emsp;2.训练的参数越多，过拟合的风险越大。卷积基有 1500 万个参数，所以在小型数据集上训练这么多参数是有风险的。</font>
+
+## 3.3 CNN的可视化
+
+&emsp;&emsp;卷起神经网络不同于其他深度学习模型，因为它是视觉概念的表示，所以非常适合可视化。
+
+#### 3.3.1 可视化卷积神经网络的中间输出（中间激活）
+
+&emsp;&emsp;指对于给定输入，<u>展示网络中各个卷积层和池化层输出的特征图</u>（层的输出通常被称为该层的激活，即激活函数的输出）。有助于理解卷积神经网络连续的层如何对输入进行变换，也有助于初步了解卷积神经网络每个过滤器的含义。
+
+>**可视化已有模型以及数据**
+>
+>```python
+>from keras.models import load_model
+>from keras.preprocessing import image
+>from keras import models
+>import numpy as np
+>import matplotlib.pyplot as plt
+>
+>model = load_model('cats_and_dogs_small_2.h5')
+>model.summary() # 查看模型架构
+>
+># 预处理单张图片，并可视化图片
+>img_path = '/Users/fchollet/Downloads/cats_and_dogs_small/test/cats/cat.1700.jpg'
+>img = image.load_img(img_path, target_size=(150, 150))
+>img_tensor = image.img_to_array(img)
+>img_tensor = np.expand_dims(img_tensor, axis=0)
+>img_tensor /= 255. # 归一化
+>plt.imshow(img_tensor[0])
+>plt.show()
+>
+># 使用数据将模型实例化
+>layer_outputs = [layer.output for layer in model.layers[:8]] # 提取前8 层的输出
+>activation_model = models.Model(inputs=model.input, outputs=layer_outputs) # 创建一个模型，给定模型输入，可以返回这些输出
+>activations = activation_model.predict(img_tensor)
+>
+># 可视化一层 一个通道
+>plt.matshow(first_layer_activation[0, :, :, 4], cmap='viridis') # 可视化第1层激活，第4个通道
+>
+># 可视化所有激活及其所有通道
+>layer_names = [] # 层的名字，可将其画到图中
+>for layer in model.layers[:8]:
+>    layer_names.append(layer.name)
+>images_per_row = 16 # 每行图像的个数
+>for layer_name, layer_activation in zip(layer_names, activations):
+>    n_features = layer_activation.shape[-1] # 特征图的信道数
+>    size = layer_activation.shape[1] # 特征图的尺寸（形状为(1, size, size, n_features)）
+>    n_cols = n_features // images_per_row # 一行image_per_row个，计算行数
+>    display_grid = np.zeros((size * n_cols, images_per_row * size)) # 图像容器
+>    for col in range(n_cols):
+>        for row in range(images_per_row):
+>            channel_image = layer_activation[0,
+>            								 :, :,
+>            								 col * images_per_row + row]
+>            channel_image -= channel_image.mean()
+>            channel_image /= channel_image.std()
+>            channel_image *= 64
+>            channel_image += 128
+>            channel_image = np.clip(channel_image, 0, 255).astype('uint8')
+>            display_grid[col * size : (col + 1) * size,
+>            	  	 	 row * size : (row + 1) * size] = channel_image
+>        scale = 1. / size
+>        plt.figure(figsize=(scale * display_grid.shape[1],
+>        					scale * display_grid.shape[0]))
+>        plt.title(layer_name)
+>        plt.grid(False)
+>        plt.imshow(display_grid, aspect='auto', cmap='viridis')
+>```
+>
+><center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/visualization_output.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>激活层所有信道可视化</b></div> </center>
+
+#### 3.3.2 可视化卷积神经网络的过滤器
+
+&emsp;&emsp;有助于精确理解卷积神经网络中每个过滤器容易接受的视觉模式或视觉概念。
+
+>**以VGG16为例**
+>
+>```python
+>import numpy as np
+>import matplotlib.pyplot as plt
+>from keras.applications import VGG16
+>from keras import backend as K
+>
+># 得到图像张量取值可能不是[0, 255]内的整数，需要对其放缩
+>def deprocess_image(x):
+>    x -= x.mean()
+>    x /= (x.std() + 1e-5)
+>    x *= 0.1
+>
+>    x += 0.5
+>    x = np.clip(x, 0, 1)
+>
+>    x *= 255
+>    x = np.clip(x, 0, 255).astype("uint8")
+>    return x
+>
+># 损失函数，将该层第n个过滤器的激活最大化
+>def generate_pattern(layer_name, filter_index, size=150):
+>    layer_output = model.get_layer(layer_name).output
+>    loss = K.mean(layer_output[:, :, :, filter_index])
+>
+>    grads = K.gradients(loss, model.input)[0] # 计算这个损失相对于输入图像的梯度
+>
+>    grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5) # 标准化技巧：将梯度标准化
+>
+>    iterate = K.function([model.input], [loss, grads]) # 返回给定输入图像的损失和梯度
+>	
+>    #从带有噪声的灰度图像开始
+>    input_img_data = np.random.random((1, size, size, 3)) * 20 + 128.
+>
+>    step = 1.
+>    for i in range(40):
+>        loss_value, grads_value = iterate([input_img_data])
+>        input_img_data += grads_value * step
+>        
+>    img = input_img_data[0]
+>    return deprocess_image(img)
+>
+># 生成某一层中所有过滤器响应模式组成的网格
+>layer_name = 'block1_conv1'
+>size = 64
+>margin = 5
+>
+># 空图像（全黑色），用于保存结果
+>results = np.zeros((8 * size + 7 * margin, 8 * size + 7 * margin, 3))
+>for i in range(8): # 遍历results 网格的行 
+>    for j in range(8): # 遍历results 网格的列
+>        filter_img = generate_pattern(layer_name, i + (j * 8), size=size)
+>
+>        horizontal_start = i * size + i * margin
+>        horizontal_end = horizontal_start + size
+>        vertical_start = j * size + j * margin
+>        vertical_end = vertical_start + size
+>        results[horizontal_start: horizontal_end,
+>            vertical_start: vertical_end, :] = filter_img
+>results = results.astype("int")
+>
+>plt.figure(figsize=(20, 20))
+>plt.imshow(results)
+>```
+>
+><center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/block1_conv1.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>block1_conv1 层的过滤器模式</b></div> </center>
+
+#### 3.3.3 可视化图像中类激活的热力图
+
+&emsp;&emsp;有助于理解图像的哪个部分被识别为属于某个类别，从而可以定位图像中的物体。这种通用的技术叫作**类激活图**（*CAM，class activation map*）可视化，它是指对输入图像生成类激活的热力图。通俗点，就是展示哪个部分对预测结果的贡献度最大。
+
+>**以VGG16以及非洲象图片为例**
+>
+>```python
+>from keras.preprocessing import image
+>from keras.applications import VGG16
+>from keras.applications.vgg16 import preprocess_input, decode_predictions
+>import cv2
+>
+>model = VGG16(weights="imagenet")
+>
+># 加载图片，并将其处理成符合模型的结构
+>img_path = "creative_commons_elephant.jpg"
+>img = image.load_img(img_path, target_size=(224, 224))
+>x = image.img_to_array(img)
+>x = np.expand_dims(x, axis=0)
+>x = preprocess_input(x)
+># 测试VGG16是否能预测
+>preds = model.predict(x)
+>print('Predicted:', decode_predictions(preds, top=3)[0])
+>
+>african_elephant_output = model.output[:, 386] # 预测向量中的“非洲象”元素
+>
+>last_conv_layer = model.get_layer('block5_conv3') # VGG16的最后一个卷积层
+>
+>grads = K.gradients(african_elephant_output, last_conv_layer.output)[0]
+>
+>pooled_grads = K.mean(grads, axis=(0, 1, 2)) # 形状为(512,) 的向量，每个元素是特定特征图通道的梯度平均大小
+>
+>iterate = K.function([model.input],
+>       [pooled_grads, last_conv_layer.output[0]])
+>
+>pooled_grads_value, conv_layer_output_value = iterate([x])
+>
+>for i in range(512):
+>conv_layer_output_value[:, :, i] *= pooled_grads_value[i]
+>
+># 得到的特征图的逐通道平均值即为类激活的热力图
+>heatmap = np.mean(conv_layer_output_value, axis=-1)
+>
+>heatmap = np.maximum(heatmap, 0)
+>heatmap /= np.max(heatmap)
+>plt.matshow(heatmap)
+>
+>img = cv2.imread(img_path)
+>heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0])) # 将热力图的大小调整为与原始图像相同
+>heatmap = np.uint8(255 * heatmap) # 将热力图转换为RGB格式
+>heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET) # 将热力图应用于原始图像
+>superimposed_img = heatmap * 0.4 + img # 0.4 是热力图强度因子
+>plt.imshow(superimposed_img.astype("int"))
+>```
+>
+><center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch3/heatmap.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>热力图</b></div> </center>
+>
+><font color=LIGHTCORAL>**注：**小象耳朵的激活强度很大，这可能是网络找到的非洲象和印度象的不同之处。</font>
+
+# 四 文本和序列&循环神经网络
+
+## 4.1处理文本数据并用普通网络训练
+
+&emsp;&emsp;深度学习模型不会接受原始文本作为输入，只能够处理**数值张量**。将文本转换成数值张量需要**分词**（*tokenization*），即将文本分解而成单元（单词、字符或*n-gram*）或**标记**（*token*）。有两张常用的分词方法：**one-hot编码[*one-hot encoding*]**与**标记嵌入[*token embedding*]**（或叫**词嵌入**）。
+
+<center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="500px"   src="images/ch4/text2token2vector.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>分词过程</b></div> </center>
+
+> **以*aclImdb*数据为例**
+>
+> ```python
+> import os
+> import numpy as np
+> from keras.preprocessing.text import Tokenizer
+> from keras.preprocessing.sequence import pad_sequences
+> from keras.models import Sequential
+> from keras.layers import Embedding, Flatten, Dense
+> import matplotlib.pyplot as plt
+> 
+> # 创建训练集和验证集
+> imdb_dir = "aclImdb"
+> train_dir = os.path.join(imdb_dir, "train")
+> 
+> labels = []
+> texts = []
+> 
+> for label_type in ["neg", "pos"]:
+>     dir_name = os.path.join(train_dir, label_type)
+>     for fname in os.listdir(dir_name):
+>         if fname[-4:] == ".txt":
+>             f = open(os.path.join(dir_name, fname), encoding='UTF-8')
+>             texts.append(f.read())
+>             f.close()
+>             if label_type == "neg":
+>                 labels.append(0)
+>             else:
+>                 labels.append(1)
+> 
+> maxlen = 100 # 在100个单词后截断评论
+> training_samples = 200 # 在200个样本上训练
+> validation_samples = 10000 # 在10000个样本上验证
+> max_words = 10000 # 只考虑数据集中前10000个最常见的单词
+> 
+> # 分词
+> tokenizer = Tokenizer(num_words=max_words)
+> tokenizer.fit_on_texts(texts)
+> sequences = tokenizer.texts_to_sequences(texts)
+> 
+> word_index = tokenizer.word_index
+> print("Found %s unique tokens." % len(word_index))
+> 
+> data = pad_sequences(sequences, maxlen=maxlen)
+> 
+> labels = np.asarray(labels)
+> print("Shape of data tensor:", data.shape)
+> print("Shape of label tensor:", labels.shape)
+> 
+> indices = np.arange(data.shape[0]) # 打乱数据
+> np.random.shuffle(indices)
+> data = data[indices]
+> labels = labels[indices]
+> 
+> x_train = data[:training_samples]
+> y_train = labels[:training_samples]
+> x_val = data[training_samples: training_samples + validation_samples]
+> y_val = labels[training_samples: training_samples + validation_samples]
+> 
+> # 使用已有的词嵌入权重
+> glove_dir = "glove.6B"
+> 
+> embeddings_index = {}
+> f = open(os.path.join(glove_dir, "glove.6B.100d.txt"), encoding="utf8")
+> for line in f:
+>     values = line.split()
+>     word = values[0]
+>     coefs = np.asarray(values[1:], dtype="float32")
+>     embeddings_index[word] = coefs
+> f.close()
+> 
+> print("Found %s word vectors." % len(embeddings_index))
+> 
+> embedding_dim = 100
+> 
+> embedding_matrix = np.zeros((max_words, embedding_dim))
+> for word, i in word_index.items():
+>     if i < max_words:
+>         embedding_vector = embeddings_index.get(word)
+>         if embedding_vector is not None:
+>             embedding_matrix[i] = embedding_vector
+>             
+> # 构建模型
+> model = Sequential()
+> model.add(Embedding(max_words, embedding_dim, input_length=maxlen))
+> model.add(Flatten())
+> model.add(Dense(32, activation='relu'))
+> model.add(Dense(1, activation='sigmoid'))
+> model.summary()
+> 
+> # 将已有词嵌入权重替换第一层权重
+> model.layers[0].set_weights([embedding_matrix])
+> # 冻结
+> model.layers[0].trainable = False
+> 
+> # 训练
+> model.compile(optimizer='rmsprop',
+>               loss='binary_crossentropy',
+>               metrics=['acc'])
+> history = model.fit(x_train, y_train,
+>                     epochs=10,
+>                     batch_size=32,
+>                     validation_data=(x_val, y_val))
+> model.save_weights('pre_trained_glove_model.h5')
+> ```
+
+## 4.2 基本概念
+
+&emsp;&emsp;**循环神经网络（*RNN，recurrent neural network*）**是一类有内部环的神经网络，将一个序列看做单个数据点，即网络的单个输入，并在网络内部对序列元素进行遍历。其思想有点像马尔科夫。
+
+> **简单RNN的Numpy实现**
+>
+> ```python
+> import numpy as np
+> 
+> timesteps = 100 # 输入序列的时间步数
+> input_features = 32 # 输入特征空间的维度
+> output_features = 64 # 输出特征空间的维度
+> 
+> inputs = np.random.random((timesteps, input_features)) # 输入数据：随机噪声，仅作为示例
+> 
+> state_t = np.zeros((output_features,)) # 初始状态：全零向量
+> 
+> # 创建随机的权重矩阵
+> W = np.random.random((output_features, input_features))
+> U = np.random.random((output_features, output_features))
+> b = np.random.random((output_features,))
+> 
+> successive_outputs = []
+> for input_t in inputs: # input_t 是形状为(input_features,) 的向量
+>     # 由输入和当前状态（前一个输出）计算得到当前输出
+>     output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)
+>     # 将这个输出保存到一个列表中
+>     successive_outputs.append(output_t)
+>     # 更新网络的状态，用于下一个时间步
+>     state_t = output_t
+> 
+> # 最终输出是一个形状为(timesteps, output_features) 的二维张量
+> final_output_sequence = np.stack(successive_outputs, axis=0)
+> ```
+>
+> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="700px"   src="images/ch4/simple_rnn.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>简单的RNN示意</b></div> </center>
+>
+> <font color=LIGHTCORAL>**注：**虽然每个时刻都会输出信息，但多数情况下只需要最后一个输出，即循环结束时的output_t。</font>
+
+>**利用`Keras`的`SimpleRNN`层对imdb数据进行预测**
+>
+>```python
+>from keras.models import Sequential
+>from keras.layers import Embedding, SimpleRNN
+>from keras.datasets import imdb
+>from keras.preprocessing import sequence
+>
+>max_features = 10000 # 作为特征的单词个数
+>maxlen = 500 # 在这么多单词后截断文本
+>batch_size = 32
+>
+>print('Loading data...')
+>(input_train, y_train), (input_test, y_test) = imdb.load_data(
+>num_words=max_features)
+>print(len(input_train), 'train sequences')
+>print(len(input_test), 'test sequences')
+>print('Pad sequences (samples x time)')
+>input_train = sequence.pad_sequences(input_train, maxlen=maxlen)
+>input_test = sequence.pad_sequences(input_test, maxlen=maxlen)
+>print('input_train shape:', input_train.shape)
+>print('input_test shape:', input_test.shape)
+>
+>model = Sequential()
+>model.add(Embedding(max_features, 32))
+>model.add(SimpleRNN(32))
+>model.add(Dense(1, activation='sigmoid'))
+>model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
+>history = model.fit(input_train, y_train,
+>                    epochs=10,
+>                    batch_size=128,
+>                    validation_split=0.2)
+>```
+>
+><font color=LIGHTCORAL>**注：**因为SimpleRNN不擅长处理长序列，因此该效果并不好。</font>
+
+&emsp;&emsp;**长短期记忆(*LSTM, long short-term memory*)**是*SimpleRNN*的一个变体，它增加了一种携带信息跨越多个时间步的方法，即增加了一个携带轨道
+
+> **LSTM架构的Numpy伪代码**
+>
+> ```python
+> output_t = activation(dot(state_t, Uo) + dot(input_t, Wo) + dot(C_t, Vo) + bo)
+> 
+> i_t = activation(dot(state_t, Ui) + dot(input_t, Wi) + bi)
+> f_t = activation(dot(state_t, Uf) + dot(input_t, Wf) + bf)
+> k_t = activation(dot(state_t, Uk) + dot(input_t, Wk) + bk)
+> 
+> c_t+1 = i_t * k_t + c_t * f_t
+> ```
+>
+> <center>    <img style="border-radius: 0.3125em;    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"  width="700px"   src="images/ch4/LSTM.png">    <br>    <div style="color:orange;    display: inline-block;    color: #999;    padding: 2px;"><b>LSTM示意</b></div> </center>
+
+> **Keras实现LSTM**
+>
+> ```python
+> from keras.layers import LSTM
+> 
+> model = Sequential()
+> model.add(Embedding(max_features, 32))
+> model.add(LSTM(32))
+> model.add(Dense(1, activation='sigmoid'))
+> model.compile(optimizer='rmsprop',
+>               loss='binary_crossentropy',
+>               metrics=['acc'])
+> history = model.fit(input_train, y_train,
+>                     epochs=10,
+>                     batch_size=128,
+>                     validation_split=0.2)
+> ```
+
+
 
 > Author：钱小z
 >
